@@ -30,9 +30,10 @@
             <h1 class="header center orange-text">Netload.d</h1>
             <div class="row center">
                 <h5 class="header col s12 light">A simple and powerful packet manipulation framework written in D language</h5>
-                <pre class="code" style="max-width: 700px">
+                <!--<pre class="code" style="max-width: 700px">
 <span class="keyword">import</span> std.stdio;
 <span class="keyword">import</span> netload.d;
+
 <span class="keyword">void</span> main() { <span class="comment">// A simple sniffing program...</span>
 	Sniffer sniffer = <span class="keyword">new</span> Sniffer(<span class="string">"enp0s25"</span>, &toEthernet);
 	sniffer.sniff(<span class="keyword">delegate</span>(Packet packet) {
@@ -45,13 +46,74 @@
 		} <span class="keyword">else</span>
                 <span class="keyword">return true</span>;
 	});
-}</pre>
+}</pre-->
             </div>
             <br><br>
         </div>
     </div>
 
     <div class="container">
+        <h3 class="header center brown-text">Forging</h3>
+        <div class="row center">
+            <span class="col s12">It's very simple to forge a packet. You juste have to create a new Protocol, like IP, and then add the layers you want on top of it:</span>
+            <br />
+            <pre class="code" style="max-width: 960px">
+<span class="keyword">import</span> std.stdio;
+<span class="keyword">import</span> netload.d;
+
+<span class="keyword">void</span> main() {
+    <span class="keyword">auto</span> packet = <span class="keyword">new</span> IP;
+    packet
+       .add!TCP
+       .add!HTTP;
+}</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3 class="header center brown-text">Injecting</h3>
+        <div class="row center">
+            <span class="col s12">Once you have created a new packet, you can really easyly inject it to through the network:</span>
+            <br />
+            <pre class="code" style="max-width: 960px">
+<span class="keyword">import</span> std.stdio;
+<span class="keyword">import</span> netload.d;
+
+<span class="keyword">void</span> main() {
+  PacketCapturer pc = <span class="keyword">new</span> PacketCapturer();
+  <span class="comment">//                                                                   EtherType</span>
+  <span class="comment">//                     <--source MAC-->  <--dest MAC---->  <802.1TAG>  <"">  <--payload--->  <-----CRC32----></span>
+  <span class="keyword">ubyte</span>[] etherPacket = [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 7, 0, 0, 0, 0, 0, 8, 42, 42, 42, 42, 43, 145, 141, 23 ];
+  pc.initialize;
+  pc.inject(etherPacket);
+  <span class="keyword">ubyte</span>[] p1 = pc.nextPacket;
+}</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3 class="header center brown-text">Sniffing</h3>
+        <div class="row center">
+            <span class="col s12">To use the sniffer, you must create a Sniffer object. This object takes three arguments: the first one defines the interface to sniff on, the second a function that casts the received packets into the correct link layer (by default Ethernet), and the third one set the promiscuous mode (wether the network card sniff all packets or just it's destinated packets).</span>
+            <br /><br />
+            <pre class="code" style="max-width: 960px">
+<span class="keyword">import</span> std.stdio;
+<span class="keyword">import</span> netload.d;
+
+<span class="keyword">void</span> main() {
+	Sniffer sniffer = <span class="keyword">new</span> Sniffer(<span class="string">"enp0s25"</span>, &toEthernet);
+	sniffer.sniff(<span class="keyword">delegate</span>(Packet packet) {
+            <span class="keyword">static uint</span> nbr = 0;
+		log(packet);
+		++nbr;
+            <span class="keyword">if</span> (nbr == 3) {
+		showLoggedPackets();
+                <span class="keyword">return false</span>;
+	    } <span class="keyword">else</span>
+                <span class="keyword">return true</span>;
+	});
+}</pre>
+        </div>
     </div>
 
     <!--  Scripts-->
